@@ -109,12 +109,11 @@ export default function Renderer(phonemes, pitch, mouth, throat, speed, singmode
     /*
      * RESCALE AMPLITUDE
      *
-     * Rescale volume from a linear scale to decibels.
+     * Rescale volume from decibels to the linear scale.
      */
     const amplitudeRescale = [
       0x00, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x04,
       0x04, 0x05, 0x06, 0x08, 0x09, 0x0B, 0x0D, 0x0F,
-      0x00  //17 elements?
     ];
     for(let i = amplitude[0].length - 1; i >= 0; i--) {
       amplitude[0][i] = amplitudeRescale[amplitude[0][i]];
