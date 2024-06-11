@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>SAM: Software Automatic Mouth</title>
@@ -8,6 +8,7 @@
       max-width: 12cm;
       margin: 0 auto;
       font-family: sans-serif;
+      box-sizing: content-box;
     }
     h1, h2 {
       text-align: center;
@@ -17,8 +18,13 @@
     }
     label { width: 30%}
     input { width: 60%}
-    input[type="submit"] { width: 100%;}
+    input[type="button"] { width: 49%; }
     input[type="range"] { transform: rotate(180deg);}
+    table{width: 100%}
+    tr th {text-align: left}
+    a {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -42,35 +48,66 @@ and the refactored versions by
 </p>
 <script src="dist/samjs.min.js"></script>
 <script>
-  opts = {
-    debug: 1,
-    pitch: 64,
-    speed: 72,
-    mouth: 128,
-    throat: 128
+  const opts = {debug: 1, pitch: 64, speed: 72, mouth: 128, throat: 128};
+  const presets = {
+    sam:               {speed: 72, pitch: 64, throat: 128, mouth: 128},
+    elf:               {speed: 72, pitch: 64, throat: 110, mouth: 160},
+    little_robot:      {speed: 92, pitch: 60, throat: 190, mouth: 190},
+    stuffy_guy:        {speed: 82, pitch: 72, throat: 110, mouth: 105},
+    little_old_lady:   {speed: 82, pitch: 32, throat: 145, mouth: 145},
+    extra_terrestrial: {speed: 100, pitch: 64, throat: 150, mouth: 200},
   };
+
   document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('speechinput');
+    const controls = {};
+
+    const setOpt = (name, value) => {
+      opts[name] = value;
+      controls[name].value = value;
+      document.getElementById(name + '-lbl').innerText = name.charAt(0).toUpperCase() + name.substring(1) + ': ' + value;
+    };
     ['speed', 'pitch', 'mouth', 'throat'].forEach(
       (name) => {
-        var e = document.getElementById(name);
+        const e = document.getElementById(name);
+        controls[name] = e;
         e.onchange = function (e) {
-          opts[e.target.id] = e.target.value;
-          document.getElementById(e.target.id + '-lbl').innerText =
-            e.target.id.charAt(0).toUpperCase() + e.target.id.substr(1) + ': ' + e.target.value;
+          setOpt(e.target.id, e.target.value);
+
         };
         e.value = opts[name];
       }
     );
-    document.getElementById('playground').addEventListener('submit', function (e) {
+    const selectPreset = (name) => {
+      const values = presets[name];
+      ['speed', 'pitch', 'mouth', 'throat'].forEach((name) => {
+        setOpt(name, values[name]);
+      });
+    };
+    selectPreset('sam');
+    Object.keys(presets).forEach((preset) => {
+      document.getElementById('preset_' + preset).addEventListener('click', () => selectPreset(preset));
+    });
+
+    let speech;
+    document.getElementById('say').addEventListener('click', function (e) {
       e.preventDefault();
-      var s = new SamJs(opts);
-      s.speak(this.textfield.value);
+      if (speech) {
+        speech.abort();
+      }
+      speech = (new SamJs(opts)).speak(input.value);
+      speech.catch(() => {});
+    });
+    document.getElementById('download').addEventListener('click', function (e) {
+      e.preventDefault();
+      (new SamJs(opts)).download(input.value);
     });
   });
 </script>
 
 <hr>
-<form id="playground">
+<form>
+  <h2>Speak</h2>
   <div>
     <label for="speechinput">Text to speak:</label>
     <input size="60" id="speechinput" name="textfield" value="Hello, my name is SAM.">
@@ -79,8 +116,24 @@ and the refactored versions by
     <label id="speed-lbl" for="speed">Speed:   </label><input type="range" id="speed" min="1" max="255" value="0" />
     <label id="mouth-lbl" for="mouth">Mouth:   </label><input type="range" id="mouth" min="0" max="255" value="0" />
     <label id="throat-lbl" for="throat">Throat: </label><input type="range" id="throat" min="0" max="255" value="0" />
-    <input type="submit" name="Text 1" value="Say">
+    <input type="button" id="say" value="Say">
+    <input type="button" id="download" value="Download">
   </div>
+  <hr>
+  <h2>Presets</h2>
+  <table>
+    <thead>
+      <tr><th>Description</th><th>Speed</th><th>Pitch</th><th>Throat</th><th>Mouth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><a id="preset_sam">Elf</a></td><td>72</td><td>64</td><td>110</td><td>160</td></tr>
+      <tr><td><a id="preset_elf">Little Robot</a></td><td>92</td><td>60</td><td>190</td><td>190</td></tr>
+      <tr><td><a id="preset_little_robot">Stuffy Guy</a></td><td>82</td><td>72</td><td>110</td><td>105</td></tr>
+      <tr><td><a id="preset_stuffy_guy">Little Old Lady</a></td><td>82</td><td>32</td><td>145</td><td>145</td></tr>
+      <tr><td><a id="preset_little_old_lady">Extra-Terrestrial</a></td><td>100</td><td>64</td><td>150</td><td>200</td></tr>
+      <tr><td><a id="preset_extra_terrestrial">SAM</a></td><td>72</td><td>64</td><td>128</td><td>128</td></tr>
+    </tbody>
+  </table>
 </form>
 <hr>
 
